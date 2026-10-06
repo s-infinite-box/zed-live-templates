@@ -6,7 +6,7 @@ Expand user-defined abbreviations into Markdown templates with dynamic variables
 
 The extension ID is `live-templates-lsp`. The language server name used in Zed settings is `templates`.
 
-The maintainer has confirmed manual functional checks in Zed on Linux and macOS. Windows has not been verified and is not claimed as supported. See the [verification record](doc/VERIFICATION.md) for the source of these results and the final submission checks.
+The maintainer has confirmed manual functional checks on Linux and macOS. The inspected Linux installation is ZedG 1.22.0 on Fedora 44 x86_64; the documented macOS ARM64 UI checks used ZedG 1.22.0. ZedG is a Zed build with a Simplified Chinese interface. Windows has not been verified and is not claimed as supported. See the [platform test records](doc/TESTING.md) and [verification summary](doc/VERIFICATION.md) for the exact scope and final submission checks.
 
 ## Build and configure
 
@@ -17,7 +17,7 @@ cargo build -p server --release
 cargo build -p extension --release --target wasm32-wasip2
 ```
 
-The native server is `target/release/server`; the WASM artifact is `target/wasm32-wasip2/release/extension.wasm`. Build the native server on the machine and architecture where it will run. Bash, Python, or other interpreters used by your command variables must also be available there.
+The native server is `target/release/server`; the WASM artifact is `target/wasm32-wasip2/release/extension.wasm`. Build the native server on the machine and architecture where it will run. Bash, Python, or other interpreters used by your command variables must also be available there. The macOS checks used a Linux-built WASM artifact and a Mac-built native server; rebuilding WASM on macOS was not part of those checks.
 
 For a development installation, run `zed: install dev extension` in Zed's command palette and select this repository. After registry publication, you can install `live-templates-lsp` from Zed's extensions view. In either case, build the native server separately and merge the following into your Zed settings, replacing both paths with absolute paths:
 

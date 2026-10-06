@@ -1,22 +1,56 @@
-# macOS 测试记录
+# Platform test records
 
-## 环境与结论
+English | [简体中文](TESTING.zh-CN.md)
 
-2026-10-06，在 macOS Apple Silicon 上完成原生服务构建、LSP 端到端检查和 ZedG 界面验证，全部通过。界面操作由用户执行并确认结果；构建、协议检查和服务启动日志由命令行核实。
+These records distinguish the maintainer's manual checks from command-line inspection. Both inspected editor installations are ZedG, a Zed build with a Simplified Chinese interface. A new UI check of the renamed extension remains pending; see the [verification summary](VERIFICATION.md).
 
-| 项目 | 本次环境 |
-|---|---|
-| macOS | 26.6.2，Darwin 25.6.0，ARM64 |
+## Linux: current environment and installed server
+
+Inspected directly on 2026-10-06:
+
+| Item | Observed value |
+| --- | --- |
+| OS | Fedora Linux 44, KDE Plasma Desktop Edition |
+| Kernel / architecture | `7.2.8-200.fc44.x86_64`, x86_64 |
+| Editor | Desktop entry: ZedG; startup version: `1.22.0+stable.364.76659a55a8c10ed355a070f8764a0b1733e3c115` |
+| Rust / Cargo used for publication checks | 1.96.0 |
+| Python | 3.14.7 |
+| Existing development registration | `live-templates`, pointing to this repository |
+| LSP server ID | `templates` |
+| Configured installed native server | ELF 64-bit executable, x86_64, in the old extension's work directory |
+| Repository at inspection | `518a0d04a55909bb0c5e7d4c2854e20856b1fd91` |
+
+The CLI's version output omits the display version but includes SHA `76659a55a8c10ed355a070f8764a0b1733e3c115`. The application's startup log identifies the full version above, and its desktop entry identifies the application as ZedG.
+
+The maintainer previously confirmed manual functionality on Linux. The exact date and extension commit of those manual checks were not recorded. The repository commit in the table is the current checkout, not a claimed manual-test commit.
+
+The existing Zed-configured native server was checked directly with:
+
+```sh
+python3 scripts/smoke.py /absolute/path/to/installed/server
+```
+
+Result: passed `dt`, `todo`, `ctx`, `@dt`, Bash/Python variables, Chinese/emoji UTF-16 ranges, cursor markers, snippet escaping, and configuration reload/removal/restoration. The server executable was not replaced during this inspection. This check verifies the installed server's protocol behavior and does not constitute a new UI check.
+
+## macOS: completed tests
+
+On 2026-10-06, the native server build, LSP end-to-end check, and ZedG UI checks passed on Apple Silicon. The maintainer performed the UI actions and confirmed the results; builds, protocol checks, and server startup were checked through command-line evidence.
+
+| Item | Tested environment |
+| --- | --- |
+| OS / architecture | macOS 26.6.2, Darwin 25.6.0, ARM64 |
 | Rust / Cargo | 1.96.0 |
-| Python | 3.14.4，已有虚拟环境 |
-| 编辑器 | ZedG v1.22.0 |
-| 被测代码 | `0c863306f829000bef41b7824fa5307b90e6321f` |
-| 被测扩展 ID | `live-templates`；后续发布准备改名为 `live-templates-lsp` |
-| 模板配置 | `examples/templates.toml`；端到端脚本会在临时副本中增加测试模板 |
+| Python | 3.14.4, existing virtual environment |
+| Editor | ZedG 1.22.0 |
+| UI-tested code | `0c863306f829000bef41b7824fa5307b90e6321f` |
+| UI-tested extension ID | `live-templates` |
+| Configuration | `examples/templates.toml`; the smoke check adds templates to a temporary copy |
 
-## 自动检查
+The records were committed in `518a0d0`. A direct SSH inspection confirmed the clean Mac checkout contains that commit, ZedG's CLI reports 1.22.0, and the isolated test data directory still registers `live-templates`. The native recheck and smoke logs show successful completion. Those observations do not establish a new UI check of `live-templates-lsp`.
 
-原生服务使用现有 Rust `stable` 工具链构建，其版本为 1.96.0。构建从父项目目录以外执行，通过 `--manifest-path` 指定项目，避免父项目 Cargo 镜像配置影响依赖解析。本次离线复查使用以下命令：
+### Automated checks
+
+The native server was built with the existing Rust `stable` toolchain, version 1.96.0. Commands were run outside the parent project's directory, using `--manifest-path` to avoid that parent's Cargo mirror override:
 
 ```sh
 project_dir="/absolute/path/to/zed-live-templates"
@@ -25,57 +59,55 @@ cargo +stable build --manifest-path "$project_dir/Cargo.toml" \
 file "$project_dir/target/release/server"
 ```
 
-构建成功，产物为 `Mach-O 64-bit executable arm64`。`--offline` 要求依赖已缓存，首次构建可以去掉该选项。
+The build produced a `Mach-O 64-bit executable arm64`. Offline mode requires cached dependencies; remove `--offline` for a first build if needed.
 
-使用已有 Python 环境运行仓库中的检查脚本：
+The existing Python environment ran:
 
 ```sh
 cd /absolute/path/to/zed-live-templates
 python3 scripts/smoke.py target/release/server
 ```
 
-脚本与实际服务通过 LSP 标准输入输出通信，检查结果：
+| Case | Result |
+| --- | --- |
+| `dt` date template and `todo` task template | Passed |
+| Bash weekday/hostname scripts | Passed |
+| Python JSON context and escaping of `$` and `}` | Passed |
+| UTF-16 range in `记录🙂 dt` | Passed; only the trigger was replaced |
+| `$END$` rendered as snippet `$0` | Passed |
+| Longest match for `dt` and `@dt` | Passed |
+| Configuration change, deletion, and restoration | Passed |
+| LSP shutdown and process exit | Passed |
 
-| 检查内容 | 结果 |
-|---|---|
-| `dt` 日期模板、`todo` 待办模板 | 通过 |
-| Bash 中文星期、主机名脚本 | 通过 |
-| Python 读取 JSON 上下文，变量输出中的 `$` 和 `}` 转义 | 通过 |
-| `记录🙂 dt` 的 UTF-16 替换范围 | 通过，只替换缩写 |
-| `$END$` 转换为 snippet 的 `$0` | 通过 |
-| `dt` 与 `@dt` 重叠时优先匹配最长缩写 | 通过 |
-| 配置修改、删除、恢复相同内容后重新加载 | 通过 |
-| LSP 正常关闭、进程退出 | 通过 |
-
-脚本最终输出：
+Final output:
 
 ```text
 OK: dt / todo / ctx / @dt, Bash / Python, UTF-16 range, cursor, snippet escaping, configuration reload / removal / restoration
 ```
 
-## 界面验证
+### Manual UI checks
 
-在独立数据目录中加载 `Live Templates` 开发扩展，使用项目级 `.zed/settings.json` 指定 `templates` 语言服务器、Mac 原生 `server` 和模板配置绝对路径。测试文件为 Markdown。
+The development extension was loaded in an isolated data directory. Project-level Zed settings selected `templates`, the Mac-native server, and the template configuration using absolute paths. The document was Markdown.
 
-| 用户操作 | 预期与实际结果 |
-|---|---|
-| 逐字输入 `dt` | 自动出现模板候选，通过 |
-| 选中 `dt` 候选并按 Enter | 缩写替换为中文星期、当前日期、时间和主机名，通过 |
-| 在展开位置输入文字 | 光标位于标题与 `---` 之间的空行，通过 |
-| 输入 `todo` 并确认候选 | 展开为 `- [ ] `，光标在末尾，通过 |
-| 输入 `记录🙂 dt` 并展开 | 前缀 `记录🙂 ` 保留，只替换 `dt`，通过 |
-| 在新行再次输入 `dt` | 仍能弹出候选并展开，通过 |
+| Maintainer action | Observed result |
+| --- | --- |
+| Type `dt` character by character | Template candidate appeared automatically |
+| Select the `dt` candidate and press Enter | Replaced the abbreviation with weekday, date, time, and hostname |
+| Type at the resulting cursor position | Cursor was on the blank line between the heading and `---` |
+| Type `todo` and confirm | Expanded to `- [ ] `, with cursor at the end |
+| Expand `记录🙂 dt` | Preserved `记录🙂 ` and replaced only `dt` |
+| Type and expand `dt` on another line | Candidate appeared and expanded again |
 
-用户最终确认“测试全部 ok”。
+The maintainer confirmed all cases passed.
 
-## 启动问题与处理
+### Startup troubleshooting
 
-本次首次输入 `dt` 没有反应，排查发现两处接入问题：
+The first `dt` attempt produced no candidate. Inspection found two setup issues:
 
-1. **扩展目录未被使用。** macOS 普通 CLI 启动应用时，没有把 `--user-data-dir` 传给应用进程。测试文件打开在主实例中，主实例加载原有的 28 个扩展，没有 `Live Templates`；独立数据目录当时没有运行产物。改为直接启动应用主程序后，独立实例加载了模板扩展。
-2. **项目尚未信任。** 新实例日志显示 `Waiting for worktree ... to be trusted, before starting language server templates`。用户信任该测试项目后，日志确认 `templates` 启动，原生服务进程运行，`dt` 随后出现候选。
+1. The normal macOS CLI launch did not pass the isolated `--user-data-dir` through to the application process. The file opened in the main instance, which had its existing extensions but not this test extension. Launching the application executable directly selected the intended isolated data directory.
+2. The new instance waited for worktree trust before starting `templates`. After the maintainer trusted the project, logs confirmed server startup and the candidates appeared.
 
-macOS 隔离验证可以直接启动应用主程序，确保扩展安装目录与应用实际使用的数据目录一致：
+The isolated instance was launched with:
 
 ```sh
 project_dir="/absolute/path/to/zed-live-templates"
@@ -84,18 +116,16 @@ data_dir="$project_dir/.tmp/zed-data"
   --user-data-dir "$data_dir" "$project_dir"
 ```
 
-本次数据目录已预先登记开发扩展；新建空目录时，需要在该实例中安装扩展并按 [中文 README](../README.zh-CN.md) 配置语言服务器。使用官方 Zed 时，应用路径换成 `/Applications/Zed.app/Contents/MacOS/zed`。普通 `--new` 只表示新建工作区，不代表新进程或独立数据目录。
+The development extension had already been registered in that data directory. In a fresh directory, install the extension and configure the language server in that instance. For official Zed, the corresponding application path is `/Applications/Zed.app/Contents/MacOS/zed`. `--new` creates a workspace; it does not establish a separate application process or data directory.
 
-项目级配置首次使用时需要信任项目。若没有弹窗，点击标题栏的感叹号，或执行 `workspace: toggle worktree security`。没有候选时先检查扩展和服务是否加载，再执行 `editor: show completions`；日志入口为 `zed: open log`。
+Project-level configuration requires a trusted worktree. Use the title-bar trust indicator or `workspace: toggle worktree security` when appropriate. If no candidate appears, inspect the active extension and server first, then try `editor: show completions`. Open logs with `zed: open log`.
 
-相关说明：[Zed CLI 源码](https://github.com/zed-industries/zed/blob/76659a55a8c10ed355a070f8764a0b1733e3c115/crates/cli/src/main.rs)、[项目信任](https://zed.dev/docs/worktree-trust)、[开发扩展](https://zed.dev/docs/extensions/developing-extensions)。
+References from the Mac test record: [Zed CLI source](https://github.com/zed-industries/zed/blob/76659a55a8c10ed355a070f8764a0b1733e3c115/crates/cli/src/main.rs), [worktree trust](https://zed.dev/docs/worktree-trust), and [development extensions](https://zed.dev/docs/extensions/developing-extensions).
 
-## 验证范围
+## Scope and remaining checks
 
-本次确认了 macOS ARM64 原生服务、动态 Bash/Python 变量、WASM 扩展加载，以及 ZedG v1.22.0 中的模板补全、展开和光标定位。
-
-- 本次使用已在 Linux 构建的 `extension.wasm`，在 Mac 重新构建原生 `server`；未验证 Mac 本机重新编译 WASM 或 Zed 自动构建开发扩展的流程。
-- 官方 Zed 1.22.0 的首次尝试未加载测试扩展，完整界面验证是在 ZedG v1.22.0 中完成的。
-- 本次没有验证 macOS Intel、其他编辑器版本或 Markdown 以外的语言。
-- 本次被测提交使用旧扩展 ID `live-templates`；后续改名和发布准备的最终提交检查见 [验证记录](VERIFICATION.md)。
-- 日期和时间取自候选生成时刻；候选菜单跨分钟停留后确认时，时间可能仍是生成候选时的值。
+- macOS used a Linux-built `extension.wasm` and a Mac-built native server. Building WASM on the Mac or testing Zed's automatic development-extension build was outside this check.
+- The complete Mac UI check used ZedG 1.22.0. The earlier official-Zed attempt did not load the test extension, so it is not a completed official-Zed UI check.
+- macOS Intel, other editor versions, and languages beyond Markdown were not checked.
+- Both inspected development registrations still use `live-templates`. Install the new `live-templates-lsp` ID and check the final submission commit before a registry PR.
+- Dates and times come from candidate generation; confirming a candidate after the menu spans a minute boundary can insert the earlier time.

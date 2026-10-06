@@ -4,7 +4,7 @@ English | [简体中文](DESIGN.zh-CN.md)
 
 ## Problem and functionality
 
-Expand configured Markdown abbreviations into notes, dated entries, and tasks. Runtime variables provide date, time, hostname, and values computed by user commands. The maintainer has confirmed manual functional checks in Zed on Linux and macOS; Windows is unverified. See the [verification record](VERIFICATION.md).
+Expand configured Markdown abbreviations into notes, dated entries, and tasks. Runtime variables provide date, time, hostname, and values computed by user commands. The maintainer has confirmed manual functional checks on Linux and macOS. The inspected Linux editor and documented macOS UI tests use ZedG 1.22.0; Windows is unverified. See the [platform test records](TESTING.md) and [verification summary](VERIFICATION.md).
 
 A template can contain:
 

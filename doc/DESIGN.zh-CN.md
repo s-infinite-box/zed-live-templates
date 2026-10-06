@@ -4,7 +4,7 @@
 
 ## 解决的问题与功能
 
-在 Zed 中用缩写快速插入日记、日期记录、待办等文本，自动生成日期、时间和机器名，减少重复输入。当前支持 Markdown；用户已确认 Linux 的 Zed 手动功能验证通过，macOS Apple Silicon 已完成原生服务构建、端到端检查和 ZedG v1.22.0 实机验证。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](VERIFICATION.md)，本次 Mac 的具体范围见 [测试记录](TESTING.md)。
+在 Zed 中用缩写快速插入日记、日期记录、待办等文本，自动生成日期、时间和机器名，减少重复输入。当前支持 Markdown；用户已确认 Linux 和 macOS 的手动功能验证通过。两端核实的编辑器均为 ZedG 1.22.0，Linux 为 Fedora 44 x86_64，macOS 为 Apple Silicon。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](VERIFICATION.md)，具体范围见 [测试记录](TESTING.zh-CN.md)。
 
 用户通过 TOML 定义缩写和模板。例如配置 `dt` 对应：
 

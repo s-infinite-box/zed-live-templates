@@ -2,17 +2,21 @@
 
 ## Manual checks reported by the maintainer
 
-On 2026-10-06, the maintainer confirmed that the extension's functionality had been manually verified in Zed on both Linux and macOS.
+On 2026-10-06, the maintainer confirmed manual functional checks on Linux and macOS. Current environment inspection and the documented macOS checks identify the editor as ZedG, a Zed build with a Simplified Chinese interface.
 
 | Platform | Reported result | Exact test date | Zed version | Tested commit |
 | --- | --- | --- | --- | --- |
-| Linux | Functional checks passed, confirmed by the maintainer | Not recorded | Not recorded | Not recorded |
+| Linux x86_64 | Functional checks passed, confirmed by the maintainer | Not recorded | Current installation observed: ZedG 1.22.0+stable.364 | Not recorded |
 | macOS ARM64 | Functional checks passed, confirmed by the maintainer | 2026-10-06 | ZedG v1.22.0 | `0c863306f829000bef41b7824fa5307b90e6321f` |
 | Windows | Not verified; support is not claimed | — | — | — |
 
-macOS 逐项结果已补录到 [macOS 测试记录（中文）](TESTING.md)：macOS 26.6.2、ARM64、Rust 1.96.0，界面验证使用 ZedG v1.22.0，用户确认全部通过。记录同时列出命令行构建、LSP 检查、扩展目录未生效和项目尚未信任这两处接入问题。
+The macOS per-case results are documented in the [platform test records](TESTING.md), also available in [Chinese](TESTING.zh-CN.md): macOS 26.6.2, ARM64, Rust 1.96.0, and ZedG 1.22.0. The maintainer confirmed all listed UI cases passed. The record includes the native build, LSP check, extension-directory mismatch, and worktree-trust setup.
 
-本次 macOS 被测提交为 `0c863306f829000bef41b7824fa5307b90e6321f`，与发布准备基线相同，扩展 ID 为 `live-templates`。这份记录不代表改名后的 `live-templates-lsp` 已完成新的界面验证；下方最终提交检查仍需在待发布提交上执行。
+The macOS-tested commit was `0c863306f829000bef41b7824fa5307b90e6321f`, with extension ID `live-templates`. Its records were added in `518a0d04a55909bb0c5e7d4c2854e20856b1fd91`; the record's commit is not the UI-tested commit.
+
+On 2026-10-06, direct Linux inspection confirmed Fedora 44 (KDE), kernel `7.2.8-200.fc44.x86_64`, and x86_64. The desktop entry identifies the application as ZedG, and its startup log reports `1.22.0+stable.364.76659a55a8c10ed355a070f8764a0b1733e3c115`. The existing development extension index still registers `live-templates`. The configured installed native server also passed `scripts/smoke.py` during this inspection. These observations establish the current environment and protocol behavior; they do not identify the exact commit used in the earlier Linux manual checks.
+
+Both inspected development registrations still use the old ID `live-templates`. The renamed `live-templates-lsp` has not yet been confirmed by a new UI test; the final submission check below remains pending. Complete UI verification in the official Zed distribution has not been established by these ZedG results.
 
 ## Automated checks for this publication preparation
 
