@@ -11,7 +11,19 @@
 | Linux x86_64 | 官方 Zed | 手动功能验证通过 |
 | macOS ARM64 | 官方 Zed | 手动功能验证通过 |
 
-此前直接观察到的 Mac 官方安装版本为 Zed 1.22.0；两端官方 Zed 手测的准确版本、日期和扩展提交没有单独提供。下方补充记录中的具体版本和提交对应原始运行记录，不直接改写为官方 Zed 测试的版本和提交。
+此前直接观察到的 Mac 官方安装版本为 Zed 1.22.0；更早两端官方 Zed 手测的准确日期和扩展提交没有单独提供。下方补充记录中的具体版本和提交对应原始运行记录，不直接改写为官方 Zed 测试的版本和提交。
+
+### 新 ID：Linux 官方 Zed 复测
+
+2026-10-06，用户确认新一轮手动测试没有问题。被测源码为 `bd55a66`，扩展 ID 为 `live-templates-lsp`，编辑器为官方 Zed 1.22.0，系统为 Fedora 44 x86_64。本轮使用独立数据目录和 `RUSTUP_TOOLCHAIN=1.96.0`，扩展索引确认新 ID 登记为开发扩展。
+
+首次 `dt` 没有候选，日志指出该实例未配置 `lsp.templates.binary.path`。补齐被 Git 忽略的项目设置，指定新构建的原生服务、`examples/templates.toml` 的绝对路径，并为 Markdown 启用 `templates`；重启语言服务后，进程检查确认服务由该官方 Zed 实例启动，用户随后确认测试通过。处理仅涉及本地测试配置，没有修改运行时代码。
+
+### 新 ID：macOS 官方 Zed 复测
+
+2026-10-06，在 macOS 26.6.2 ARM64 更新到源码 `bd55a66`，使用 Rust 1.96.0 重新构建原生 release 服务。官方 Zed 1.22.0 在独立开发扩展目录中加载 Linux 构建的 WASM，扩展 ID 为 `live-templates-lsp`；项目设置指定 Mac 原生服务和 `examples/templates.toml`。日志确认项目信任与服务启动，进程检查确认服务由该官方 Zed 实例启动，用户随后确认手动测试通过。
+
+源码安装首次失败，是配置的 Rust 镜像对 WASM 标准库返回 HTTP 404。下载官方同版本组件、核对 SHA-256 `17a511eade6b74a86a31af9f7498d416a717472a91d11b180ac760944e69599e` 后，通过 rustup 完成目标安装。随后 Mac 本机 WASM 开发构建通过，包括从仓库目录发起的构建；另一轮从 `/tmp` 通过 `--manifest-path` 指定项目，避开父项目 Cargo 镜像的依赖下载等待。界面手测使用预先登记的 Linux 构建产物；没有另行记录 Zed 源码安装界面的成功重试，因此不将命令行构建结果写成界面安装结果。
 
 ## 补充记录：Linux 当前环境与已安装服务
 
@@ -127,5 +139,5 @@ data_dir="$project_dir/.tmp/zed-data"
 - 本次使用已在 Linux 构建的 `extension.wasm`，在 Mac 重新构建原生 `server`；未验证 Mac 本机重新编译 WASM 或 Zed 自动构建开发扩展的流程。
 - 本节详细界面记录来自 ZedG 1.22.0；官方 Zed 的首次启动问题属于当时的接入问题。用户已补充确认官方 Zed 测试成功，主要结果见上方“官方 Zed 手动验证”。
 - 本次没有验证 macOS Intel、其他编辑器版本或 Markdown 以外的语言。
-- Mac 的界面被测提交使用旧扩展 ID `live-templates`；本次直接检查也确认两端登记仍为旧 ID。后续改名和发布准备的最终提交检查见 [验证记录](VERIFICATION.md)。
+- 本节 Mac 的历史界面被测提交使用旧 ID `live-templates`；Linux 和 macOS 的新 ID 均已通过官方 Zed 手测，准备提交的注册条目指向被测源码 `bd55a66`，见 [验证记录](VERIFICATION.md)。
 - 日期和时间取自候选生成时刻；候选菜单跨分钟停留后确认时，时间可能仍是生成候选时的值。

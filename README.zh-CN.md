@@ -119,7 +119,7 @@ command = ["python3", "variables/symbol_name.py"]
 
 ## 验证
 
-用户已确认 Linux 和 macOS 的官方 Zed 手动功能验证通过，发布准备期间的 LSP 端到端检查也已通过。测试脚本随后已从仓库移除，历史结果保留在 [测试记录](doc/TESTING.zh-CN.md)。发布前仍需在最终提交上确认新 ID `live-templates-lsp` 的开发扩展安装、模板展开和光标定位，逐项清单见 [验证记录](doc/VERIFICATION.md)。
+用户已确认 Linux 和 macOS 的官方 Zed 手动功能验证通过；Linux 和 macOS 的新 ID `live-templates-lsp` 均已完成官方 Zed 1.22.0 复测。发布准备期间的 LSP 端到端检查已通过，测试脚本随后已从仓库移除，历史结果保留在 [测试记录](doc/TESTING.zh-CN.md)。被测源码、构建与发布检查见 [验证记录](doc/VERIFICATION.md)。
 
 时间目前取自补全请求时刻。候选菜单停留跨分钟后才确认时，插入的时间可能仍是生成候选的时间；尚未实现确认时刷新。
 

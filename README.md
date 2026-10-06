@@ -17,7 +17,7 @@ cargo build -p server --release
 cargo build -p extension --release --target wasm32-wasip2
 ```
 
-The native server is `target/release/server`; the WASM artifact is `target/wasm32-wasip2/release/extension.wasm`. Build the native server on the machine and architecture where it will run. Bash, Python, or other interpreters used by your command variables must also be available there. The macOS checks used a Linux-built WASM artifact and a Mac-built native server; rebuilding WASM on macOS was not part of those checks.
+The native server is `target/release/server`; the WASM artifact is `target/wasm32-wasip2/release/extension.wasm`. Build the native server on the machine and architecture where it will run. Bash, Python, or other interpreters used by your command variables must also be available there. The macOS UI checks used a Linux-built WASM artifact and a Mac-built native server. Subsequent Mac-local WASM development builds also passed; see the test records for their scope.
 
 For a development installation, run `zed: install dev extension` in Zed's command palette and select this repository. After registry publication, you can install `live-templates-lsp` from Zed's extensions view. In either case, build the native server separately and merge the following into your Zed settings, replacing both paths with absolute paths:
 
