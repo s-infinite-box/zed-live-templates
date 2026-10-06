@@ -1,0 +1,17 @@
+id = "live-templates"
+name = "Live Templates"
+version = "0.1.0"
+schema_version = 1
+authors = []
+description = "User-defined templates with command variables"
+
+[lib]
+kind = "Rust"
+version = "0.7.0"
+
+[language_servers.templates]
+name = "Live Templates"
+languages = ["Markdown"]
+
+[language_servers.templates.language_ids]
+Markdown = "markdown"

@@ -1,0 +1,19 @@
+# 构建产物
+/target/
+/extension.wasm
+
+# 本地临时文件与缓存
+/.tmp/
+__pycache__/
+*.log
+*.bak
+*.swp
+*~
+
+# 编辑器配置与本地环境
+/.idea/
+/.vscode/
+/.zed/
+.env
+.env.*
+!.env.example

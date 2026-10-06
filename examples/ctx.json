@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "variable": {
+    "name": "host"
+  },
+  "now": {
+    "unix_ms": 1791278460000,
+    "timezone": "+08:00",
+    "year": 2026,
+    "month": 10,
+    "day": 6,
+    "hour": 17,
+    "minute": 21,
+    "second": 0,
+    "weekday": 2
+  },
+  "host": {
+    "name": "inft.example"
+  },
+  "project": {
+    "root": null,
+    "name": null
+  },
+  "document": {
+    "uri": "untitled:daily-note",
+    "path": null,
+    "name": null,
+    "language": "markdown",
+    "version": 1,
+    "line": "dt"
+  },
+  "position": {
+    "line": 0,
+    "character": 2,
+    "encoding": "utf-16"
+  },
+  "template": {
+    "id": "daily_note",
+    "trigger": "dt"
+  },
+  "builtins": {
+    "date": "2026/10/6",
+    "time": "17:21",
+    "host": "inft.example"
+  },
+  "symbol": null,
+  "selection": null
+}

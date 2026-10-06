@@ -1,0 +1,13 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+engine = { package = "core", path = "../core" }
+anyhow.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tower-lsp = "0.20"
