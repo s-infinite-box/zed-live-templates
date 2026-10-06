@@ -4,7 +4,7 @@
 
 用户在 Markdown 中输入自己配置的缩写，选择补全候选后确认，插入模板并定位到 `$END$`。模板、自定义变量及其命令都由用户配置，`dt` 和 `todo` 只是示例。
 
-代码分为 Zed WASM 扩展 `extension`、模板库 `core` 和原生 LSP 服务 `server`。当前支持 Markdown；用户已确认 Linux 和 macOS 的手动功能验证通过。本次核实 Linux 为 Fedora 44 x86_64、ZedG 1.22.0；macOS Apple Silicon 已完成原生服务构建、端到端检查和 ZedG 1.22.0 实机展开验证。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](doc/VERIFICATION.md)，两端的环境和具体范围见 [测试记录](doc/TESTING.zh-CN.md)。
+代码分为 Zed WASM 扩展 `extension`、模板库 `core` 和原生 LSP 服务 `server`。当前支持 Markdown；用户已确认在 Linux x86_64 和 macOS ARM64 的官方 Zed 中完成手动功能验证，均通过。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](doc/VERIFICATION.md)，官方 Zed 的结果、补充环境检查和具体范围见 [测试记录](doc/TESTING.zh-CN.md)。
 
 功能、工作流程和代码架构见 [设计文档](doc/DESIGN.zh-CN.md)。扩展 ID 为 `live-templates-lsp`；Zed 设置中的语言服务器名称仍为 `templates`。
 
@@ -119,16 +119,7 @@ command = ["python3", "variables/symbol_name.py"]
 
 ## 验证
 
-只保留一个端到端检查，直接与实际 LSP 服务通信：
-
-```sh
-cargo build -p server
-python3 scripts/smoke.py
-```
-
-它检查多个用户缩写和最长匹配、Bash/Python 命令、中文和 emoji 的 UTF-16 替换范围、最终光标标记、文字转义，以及配置修改、删除和恢复。
-
-用户已确认 Linux 和 macOS 的手动功能验证通过；当前 Linux 环境、已安装服务的端到端复查，以及 Mac 的被测提交、逐项结果和排查过程已补齐，见 [测试记录](doc/TESTING.zh-CN.md)。Mac 被测代码为 `0c86330`；本次两端核实的开发扩展登记仍为旧 ID `live-templates`。发布前仍需在最终提交上确认新 ID `live-templates-lsp` 的开发扩展安装、模板展开和光标定位，见 [验证记录](doc/VERIFICATION.md)。
+用户已确认 Linux 和 macOS 的官方 Zed 手动功能验证通过，发布准备期间的 LSP 端到端检查也已通过。测试脚本随后已从仓库移除，历史结果保留在 [测试记录](doc/TESTING.zh-CN.md)。发布前仍需在最终提交上确认新 ID `live-templates-lsp` 的开发扩展安装、模板展开和光标定位，逐项清单见 [验证记录](doc/VERIFICATION.md)。
 
 时间目前取自补全请求时刻。候选菜单停留跨分钟后才确认时，插入的时间可能仍是生成候选的时间；尚未实现确认时刷新。
 

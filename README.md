@@ -6,7 +6,7 @@ Expand user-defined abbreviations into Markdown templates with dynamic variables
 
 The extension ID is `live-templates-lsp`. The language server name used in Zed settings is `templates`.
 
-The maintainer has confirmed manual functional checks on Linux and macOS. The inspected Linux installation is ZedG 1.22.0 on Fedora 44 x86_64; the documented macOS ARM64 UI checks used ZedG 1.22.0. ZedG is a Zed build with a Simplified Chinese interface. Windows has not been verified and is not claimed as supported. See the [platform test records](doc/TESTING.md) and [verification summary](doc/VERIFICATION.md) for the exact scope and final submission checks.
+The maintainer has confirmed manual functional checks in official Zed on Linux x86_64 and macOS ARM64. Windows has not been verified and is not claimed as supported. See the [platform test records](doc/TESTING.md) and [verification summary](doc/VERIFICATION.md) for the official-Zed results, supplementary environment checks, and final submission checks.
 
 ## Build and configure
 
@@ -115,14 +115,7 @@ Commands run when generating a completion and can run again when completions ref
 
 ## Verification and limitations
 
-Run the existing end-to-end check against the native server:
-
-```sh
-cargo build -p server
-python3 scripts/smoke.py
-```
-
-It covers custom triggers, longest matching triggers, Bash/Python variables, UTF-16 replacement ranges with Chinese text and emoji, cursor markers, snippet escaping, and configuration reload/removal/restoration. Manual Zed verification and final submission status are recorded in [doc/VERIFICATION.md](doc/VERIFICATION.md).
+The maintainer has confirmed manual functional checks in official Zed on Linux and macOS. The pre-publication LSP checks also passed; their harness was subsequently removed from this repository. Results and the manual checklist for the renamed extension are recorded in [doc/VERIFICATION.md](doc/VERIFICATION.md).
 
 Dates and times are captured when the completion is generated. Confirming a candidate later can insert an earlier timestamp. Automatic menu display can depend on Zed's completion behavior and other language servers. Windows configuration lookup and command process cleanup have not been verified.
 

@@ -4,7 +4,7 @@ English | [简体中文](DESIGN.zh-CN.md)
 
 ## Problem and functionality
 
-Expand configured Markdown abbreviations into notes, dated entries, and tasks. Runtime variables provide date, time, hostname, and values computed by user commands. The maintainer has confirmed manual functional checks on Linux and macOS. The inspected Linux editor and documented macOS UI tests use ZedG 1.22.0; Windows is unverified. See the [platform test records](TESTING.md) and [verification summary](VERIFICATION.md).
+Expand configured Markdown abbreviations into notes, dated entries, and tasks. Runtime variables provide date, time, hostname, and values computed by user commands. The maintainer has confirmed manual functional checks in official Zed on Linux x86_64 and macOS ARM64; Windows is unverified. See the [platform test records](TESTING.md) and [verification summary](VERIFICATION.md).
 
 A template can contain:
 
@@ -54,4 +54,4 @@ Zed and the native server exchange LSP messages over stdin/stdout. The server ru
 - `core/context.rs` creates the time, hostname, project, and document snapshot.
 - `core/command.rs` and `core/renderer.rs` run variable commands and assemble snippets.
 
-`examples/` contains sample configuration and scripts. `scripts/smoke.py` is the single LSP end-to-end check.
+`examples/` contains sample configuration and variable scripts. Historical verification results and the manual checklist are in [VERIFICATION.md](VERIFICATION.md).

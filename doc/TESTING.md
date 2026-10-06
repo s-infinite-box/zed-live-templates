@@ -2,9 +2,20 @@
 
 English | [简体中文](TESTING.zh-CN.md)
 
-These records distinguish the maintainer's manual checks from command-line inspection. Both inspected editor installations are ZedG, a Zed build with a Simplified Chinese interface. A new UI check of the renamed extension remains pending; see the [verification summary](VERIFICATION.md).
+The primary compatibility result is the maintainer's confirmed manual testing in official Zed on Linux and macOS. The earlier ZedG inspection and logs below are supplementary test evidence. A new UI check of the renamed extension remains pending; see the [verification summary](VERIFICATION.md).
 
-## Linux: current environment and installed server
+## Official Zed manual verification
+
+On 2026-10-06, the maintainer explicitly confirmed that functionality had also been tested in the official Zed distribution on both platforms.
+
+| Platform | Editor | Reported result |
+| --- | --- | --- |
+| Linux x86_64 | Official Zed | Functional checks passed, confirmed by the maintainer |
+| macOS ARM64 | Official Zed | Functional checks passed, confirmed by the maintainer |
+
+The official macOS installation was observed reporting Zed 1.22.0. Exact official-Zed manual-test versions, dates, and extension commits were not separately supplied. The precise versions and commits in the supplementary records below refer to those recorded runs and should not be reassigned to the official-Zed runs.
+
+## Supplementary Linux environment and installed server
 
 Inspected directly on 2026-10-06:
 
@@ -24,15 +35,11 @@ The CLI's version output omits the display version but includes SHA `76659a55a8c
 
 The maintainer previously confirmed manual functionality on Linux. The exact date and extension commit of those manual checks were not recorded. The repository commit in the table is the current checkout, not a claimed manual-test commit.
 
-The existing Zed-configured native server was checked directly with:
-
-```sh
-python3 scripts/smoke.py /absolute/path/to/installed/server
-```
+The existing Zed-configured native server was checked directly with the pre-publication LSP end-to-end harness. That test script was subsequently removed from the repository at the maintainer's request.
 
 Result: passed `dt`, `todo`, `ctx`, `@dt`, Bash/Python variables, Chinese/emoji UTF-16 ranges, cursor markers, snippet escaping, and configuration reload/removal/restoration. The server executable was not replaced during this inspection. This check verifies the installed server's protocol behavior and does not constitute a new UI check.
 
-## macOS: completed tests
+## Supplementary macOS ZedG test trace
 
 On 2026-10-06, the native server build, LSP end-to-end check, and ZedG UI checks passed on Apple Silicon. The maintainer performed the UI actions and confirmed the results; builds, protocol checks, and server startup were checked through command-line evidence.
 
@@ -61,12 +68,7 @@ file "$project_dir/target/release/server"
 
 The build produced a `Mach-O 64-bit executable arm64`. Offline mode requires cached dependencies; remove `--offline` for a first build if needed.
 
-The existing Python environment ran:
-
-```sh
-cd /absolute/path/to/zed-live-templates
-python3 scripts/smoke.py target/release/server
-```
+The existing Python environment ran the pre-publication LSP end-to-end harness against `target/release/server`. That script was subsequently removed from the repository; the following table records the completed historical checks.
 
 | Case | Result |
 | --- | --- |
@@ -125,7 +127,7 @@ References from the Mac test record: [Zed CLI source](https://github.com/zed-ind
 ## Scope and remaining checks
 
 - macOS used a Linux-built `extension.wasm` and a Mac-built native server. Building WASM on the Mac or testing Zed's automatic development-extension build was outside this check.
-- The complete Mac UI check used ZedG 1.22.0. The earlier official-Zed attempt did not load the test extension, so it is not a completed official-Zed UI check.
+- The detailed Mac trace above was collected with ZedG 1.22.0. The earlier official-Zed startup issue was a setup failure; the maintainer subsequently confirmed successful official-Zed testing, recorded above.
 - macOS Intel, other editor versions, and languages beyond Markdown were not checked.
 - Both inspected development registrations still use `live-templates`. Install the new `live-templates-lsp` ID and check the final submission commit before a registry PR.
 - Dates and times come from candidate generation; confirming a candidate after the menu spans a minute boundary can insert the earlier time.

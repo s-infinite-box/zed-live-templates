@@ -4,7 +4,7 @@
 
 ## 解决的问题与功能
 
-在 Zed 中用缩写快速插入日记、日期记录、待办等文本，自动生成日期、时间和机器名，减少重复输入。当前支持 Markdown；用户已确认 Linux 和 macOS 的手动功能验证通过。两端核实的编辑器均为 ZedG 1.22.0，Linux 为 Fedora 44 x86_64，macOS 为 Apple Silicon。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](VERIFICATION.md)，具体范围见 [测试记录](TESTING.zh-CN.md)。
+在 Zed 中用缩写快速插入日记、日期记录、待办等文本，自动生成日期、时间和机器名，减少重复输入。当前支持 Markdown；用户已确认 Linux x86_64 和 macOS ARM64 的官方 Zed 手动功能验证均通过。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](VERIFICATION.md)，具体范围见 [测试记录](TESTING.zh-CN.md)。
 
 用户通过 TOML 定义缩写和模板。例如配置 `dt` 对应：
 
@@ -56,4 +56,4 @@ Zed 与原生服务通过标准输入输出传递 LSP 消息；服务单独启�
 - `core/context.rs`：生成时间、机器名、项目和文档上下文。
 - `core/command.rs`、`core/renderer.rs`：运行变量命令，将结果组合成 snippet。
 
-上述 `server/`、`core/` 文件均位于对应包的 `src/` 下。`examples/` 提供配置和脚本示例；`scripts/smoke.py` 保留一份端到端检查。
+上述 `server/`、`core/` 文件均位于对应包的 `src/` 下。`examples/` 提供配置和变量脚本示例；历史验证结果与手动复测清单见 [验证记录](VERIFICATION.md)。
