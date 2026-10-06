@@ -1,57 +1,57 @@
-# Zed 动态模板插件设计
+# Live Templates LSP design
 
-## 解决的问题与功能
+English | [简体中文](DESIGN.zh-CN.md)
 
-在 Zed 中用缩写快速插入日记、日期记录、待办等文本，自动生成日期、时间和机器名，减少重复输入。当前支持 Markdown；Linux 已完成构建和端到端检查，macOS 理论兼容，尚未编译和实机验证。
+## Problem and functionality
 
-用户通过 TOML 定义缩写和模板。例如配置 `dt` 对应：
+Expand configured Markdown abbreviations into notes, dated entries, and tasks. Runtime variables provide date, time, hostname, and values computed by user commands. The maintainer has confirmed manual functional checks in Zed on Linux and macOS; Windows is unverified. See the [verification record](VERIFICATION.md).
+
+A template can contain:
 
 ```text
-# 周$week$ $date$ $time$ $host$
+# $date$ $time$ $host$
 $END$
 ---
 ```
 
-输入完整的 `dt`，选择模板补全并确认后，缩写被替换为正文，光标停在第二行。
+After the user confirms the completion, Zed replaces the abbreviation and places the cursor on the second line.
 
-- **自定义模板**：缩写和正文均由用户配置；多个缩写同时匹配时优先使用最长的，例如 `@dt` 优先于 `dt`。
-- **动态变量**：内置 `$date$`、`$time$`、`$host$`；其他变量通过 Bash、Python 等命令计算，也能覆盖内置值。示例中的 `$week$` 由用户脚本提供。
-- **光标定位**：`$END$` 指定最终位置；省略时停在模板末尾。
-- **配置重载**：修改模板和脚本后，下次补全生效，无需重新编译插件。
+- Users define triggers and template bodies in TOML. The longest matching trigger wins.
+- Built-in variables are `date`, `time`, and `host`. User commands can add variables or override built-ins.
+- `$END$` marks the final cursor position; omission places it at the end.
+- Template configuration reloads on the next completion. Scripts are read on each execution.
 
-构建、安装、配置示例和命令接口见 [README.md](../README.md)。
+The extension ID is `live-templates-lsp`; the language server ID remains `templates`. Installation, configuration, and the command interface are documented in the [README](../README.md).
 
-## 工作流程
+## Workflow
 
-1. 用户配置 `templates.toml`，定义缩写、正文和变量命令。
-2. Zed 打开 Markdown 文档，WASM 扩展启动原生模板服务；Zed 通过 LSP 同步文档内容，并在补全请求中传入光标位置。
-3. 服务收到补全请求，读取配置，按当前语言和光标位置匹配完整缩写，选择最长的有效匹配。
-4. 服务生成一次时间和文档快照 `ctx`，计算模板用到的变量。内置变量直接取值；命令变量通过 JSON 标准输入和环境变量接收上下文，以标准输出返回结果。同一变量重复出现只计算一次。
-5. 模板引擎将变量值作为普通文字插入，把 `$END$` 转换为 snippet 的 `$0`。服务返回补全内容和缩写替换范围；文档版本已变化时丢弃结果。
-6. 用户确认补全，Zed 替换缩写、定位光标，并提供原生撤销。
+1. The user writes `templates.toml`, including triggers, template bodies, and optional variable commands.
+2. The Zed WASM extension reads the configured server path and starts the native LSP server. Zed supplies document content and completion positions.
+3. The server reloads changed configuration and selects the longest complete trigger matching the document language and cursor position.
+4. The server creates one time/document snapshot as JSON context. Built-ins use that snapshot; commands receive it through stdin and environment variables, and return values through stdout. Repeated variables are computed once per render.
+5. The renderer inserts variable values as literal text, escapes snippet characters, and converts `$END$` to `$0`. The server returns the snippet and replacement range, discarding results for documents whose version has changed.
+6. Zed applies the completion and provides cursor navigation and undo.
 
-配置内容未变时复用解析结果；解析错误保留上一次有效配置。删除配置文件后，下次补全清空活动模板；恢复文件后重新加载。
+Unchanged configuration reuses the parsed value. Invalid configuration preserves the previous valid version; deletion clears templates, and restoration reloads them.
 
-命令失败或超时会取消本次模板候选。命令在生成候选时执行，可能因补全刷新执行多次，因此应只计算变量值。日期和时间也取自生成候选的时刻，确认时不会再次刷新。
+Command failure or timeout cancels the completion. Commands and timestamps are evaluated when generating the candidate, so a completion refresh can rerun commands, and confirmation does not refresh the timestamp.
 
-## 代码架构
+## Code structure
 
-一个 Rust workspace，三个包，构建两个产物：
+One Rust workspace has three packages and builds two artifacts:
 
-| 代码位置 / 包 | 职责 | 产物 |
-|---|---|---|
-| `src/lib.rs` / `extension` | 接入 Zed，读取设置，启动模板服务 | `extension.wasm` |
-| `crates/server/src/` / `server` | 处理 LSP 请求、文档同步、配置重载、缩写匹配和补全返回 | 原生程序 `server` |
-| `crates/core/src/` / `core` | 解析配置和模板、生成上下文、执行变量命令、渲染 snippet | 链接到 `server` 的库 |
+| Package / location | Responsibility | Artifact |
+| --- | --- | --- |
+| `extension` / `src/lib.rs` | Zed integration, settings, native server startup | `extension.wasm` |
+| `server` / `crates/server/src/` | LSP requests, document state, reload, trigger matching, completions | Native `server` executable |
+| `core` / `crates/core/src/` | Configuration and template parsing, context, commands, snippet rendering | Library linked into `server` |
 
-Zed 与原生服务通过标准输入输出传递 LSP 消息；服务单独启动用户命令，日志写入标准错误。
+Zed and the native server exchange LSP messages over stdin/stdout. The server runs user commands separately and writes diagnostics to stderr. The native server is built and configured separately from the WASM extension.
 
-主要文件职责：
+- `server/main.rs` connects configuration, matching, rendering, and completion responses.
+- `server/documents.rs` tracks documents and converts UTF-16 positions and trigger boundaries.
+- `core/config.rs` and `core/parser.rs` parse configuration and template nodes.
+- `core/context.rs` creates the time, hostname, project, and document snapshot.
+- `core/command.rs` and `core/renderer.rs` run variable commands and assemble snippets.
 
-- `server/main.rs`：服务入口，串起配置、匹配、变量计算和补全返回。
-- `server/documents.rs`：文档状态、UTF-16 光标位置转换和缩写边界判断。
-- `core/config.rs`、`core/parser.rs`：读取配置，将模板拆成文字、变量和光标节点。
-- `core/context.rs`：生成时间、机器名、项目和文档上下文。
-- `core/command.rs`、`core/renderer.rs`：运行变量命令，将结果组合成 snippet。
-
-上述 `server/`、`core/` 文件均位于对应包的 `src/` 下。`examples/` 提供配置和脚本示例；`scripts/smoke.py` 保留一份端到端检查。
+`examples/` contains sample configuration and scripts. `scripts/smoke.py` is the single LSP end-to-end check.

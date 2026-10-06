@@ -18,7 +18,7 @@ impl zed::Extension for Extension {
             .as_ref()
             .and_then(|binary| binary.path.clone())
             .ok_or_else(|| {
-                "请在 Zed 的 lsp.templates.binary.path 中配置 server 可执行文件的绝对路径"
+                "Set lsp.templates.binary.path in Zed settings to the absolute path of the server executable"
                     .to_owned()
             })?;
         let binary = settings.binary.unwrap();

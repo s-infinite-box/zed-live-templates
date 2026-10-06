@@ -1,8 +1,9 @@
-id = "live-templates"
+id = "live-templates-lsp"
 name = "Live Templates"
 version = "0.1.0"
 schema_version = 1
-authors = []
+authors = ["s-infinite-box"]
+repository = "https://github.com/s-infinite-box/zed-live-templates"
 description = "User-defined templates with command variables"
 
 [lib]

@@ -1,27 +1,27 @@
 version = 1
 
-# 仅供用户复制和修改；插件不会自动启用这些模板或保留 dt 缩写。
+# Copy and customize these examples; the extension does not enable them automatically.
 [formats]
 date = "%Y/%-m/%-d"
 time = "%H:%M"
 timezone = "local"
 
-# 自定义中文星期变量，脚本读取与日期、时间相同快照中的星期编号。
+# Custom Chinese weekday variable, using the same time snapshot as date and time.
 [variables.week]
 command = ["bash", "variables/week_zh.sh"]
 
-# 覆盖内置 host 变量，保留 hostname 的第一段。
+# Override the built-in host variable with the first segment of the hostname.
 [variables.host]
 command = ["bash", "variables/short_host.sh"]
 
-# 可选语义信息示例；模板使用 $symbol_name$ 时才执行。
+# Optional context example; only executed when a template uses $symbol_name$.
 [variables.symbol_name]
 command = ["python3", "variables/symbol_name.py"]
 
 [[templates]]
 id = "daily_note"
 trigger = "dt"
-description = "插入日期记录"
+description = "Insert a dated note"
 languages = ["Markdown"]
 body = '''# 周$week$ $date$ $time$ $host$
 $END$
@@ -30,6 +30,6 @@ $END$
 [[templates]]
 id = "task"
 trigger = "todo"
-description = "插入待办事项"
+description = "Insert a task"
 languages = ["Markdown"]
 body = '- [ ] $END$'
