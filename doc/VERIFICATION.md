@@ -7,12 +7,12 @@ On 2026-10-06, the maintainer confirmed that the extension's functionality had b
 | Platform | Reported result | Exact test date | Zed version | Tested commit |
 | --- | --- | --- | --- | --- |
 | Linux | Functional checks passed, confirmed by the maintainer | Not recorded | Not recorded | Not recorded |
-| macOS | Functional checks passed, confirmed by the maintainer | Not recorded | Not recorded | Not recorded |
+| macOS ARM64 | Functional checks passed, confirmed by the maintainer | 2026-10-06 | ZedG v1.22.0 | `0c863306f829000bef41b7824fa5307b90e6321f` |
 | Windows | Not verified; support is not claimed | — | — | — |
 
-The macOS environment was previously inspected as arm64, macOS 26.6.2, with Zed 1.21.0 and Rust 1.96.0. Those observations describe that environment; they do not establish the version or commit used in the maintainer's later manual checks. A per-case manual checklist was not supplied in this publishing preparation pass.
+macOS 逐项结果已补录到 [macOS 测试记录（中文）](TESTING.md)：macOS 26.6.2、ARM64、Rust 1.96.0，界面验证使用 ZedG v1.22.0，用户确认全部通过。记录同时列出命令行构建、LSP 检查、扩展目录未生效和项目尚未信任这两处接入问题。
 
-The repository was clean at baseline commit `0c863306f829000bef41b7824fa5307b90e6321f` before the publication changes. This is a preparation baseline, not a claimed manual-test commit.
+本次 macOS 被测提交为 `0c863306f829000bef41b7824fa5307b90e6321f`，与发布准备基线相同，扩展 ID 为 `live-templates`。这份记录不代表改名后的 `live-templates-lsp` 已完成新的界面验证；下方最终提交检查仍需在待发布提交上执行。
 
 ## Automated checks for this publication preparation
 

@@ -4,7 +4,7 @@
 
 用户在 Markdown 中输入自己配置的缩写，选择补全候选后确认，插入模板并定位到 `$END$`。模板、自定义变量及其命令都由用户配置，`dt` 和 `todo` 只是示例。
 
-代码分为 Zed WASM 扩展 `extension`、模板库 `core` 和原生 LSP 服务 `server`。当前支持 Markdown；用户已确认在 Linux 和 macOS 的 Zed 中完成手动功能验证。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](doc/VERIFICATION.md)。
+代码分为 Zed WASM 扩展 `extension`、模板库 `core` 和原生 LSP 服务 `server`。当前支持 Markdown；用户已确认 Linux 的 Zed 手动功能验证通过，macOS Apple Silicon 已完成原生服务构建、端到端检查和 ZedG v1.22.0 实机展开验证。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](doc/VERIFICATION.md)，本次 Mac 的环境、命令和逐项结果见 [macOS 测试记录](doc/TESTING.md)。
 
 功能、工作流程和代码架构见 [设计文档](doc/DESIGN.zh-CN.md)。扩展 ID 为 `live-templates-lsp`；Zed 设置中的语言服务器名称仍为 `templates`。
 
@@ -19,7 +19,7 @@ cargo build -p extension --release --target wasm32-wasip2
 
 项目使用 Rust 1.96.0 和 `wasm32-wasip2` 目标。原生服务位于 `target/release/server`，扩展产物位于 `target/wasm32-wasip2/release/extension.wasm`。
 
-在 macOS 上需重新构建原生 `server`，Linux 的二进制不能直接使用。用户命令所需的 Bash、Python 等解释器也需要在本机可用。
+在 macOS 上需重新构建原生 `server`，Linux 的二进制不能直接使用。用户命令所需的 Bash、Python 等解释器也需要在本机可用。本次 Mac 验证使用 Linux 构建的 `extension.wasm` 和 Mac 原生服务；Mac 本机重新编译 WASM 的流程尚未验证。
 
 已安装旧 ID `live-templates` 的开发扩展时，先卸载旧扩展，再用本项目目录重新安装 `live-templates-lsp`。现有 `lsp.templates` 设置和模板配置路径继续使用。
 
@@ -46,6 +46,8 @@ cargo build -p extension --release --target wasm32-wasip2
 ```
 
 `"..."` 保留其他语言服务器。重启 Markdown 的语言服务器后，输入示例中的 `dt` 或 `todo`；如果自动补全未弹出，执行 `editor: show completions`。选中模板候选后按当前键位确认；默认通常是 Enter。
+
+如果把上述配置放在项目的 `.zed/settings.json` 中，首次打开需信任该项目，模板服务才会启动。macOS 使用独立数据目录验证时，直接启动应用主程序并传入 `--user-data-dir`；具体命令与两处接入问题见 [测试记录](doc/TESTING.md#启动问题与处理)。
 
 默认模板配置路径为 `$XDG_CONFIG_HOME/zed-live-templates/templates.toml`，未设置 `XDG_CONFIG_HOME` 时使用 `~/.config/zed-live-templates/templates.toml`。也可以通过 `server --config /absolute/path/templates.toml` 指定，命令行优先于初始化选项。没有模板配置时不提供候选。
 
@@ -126,7 +128,7 @@ python3 scripts/smoke.py
 
 它检查多个用户缩写和最长匹配、Bash/Python 命令、中文和 emoji 的 UTF-16 替换范围、最终光标标记、文字转义，以及配置修改、删除和恢复。
 
-用户已确认 Linux 和 macOS 的 Zed 手动功能验证通过；各检查项的详细结果、测试版本和对应提交尚未完整记录，见 [验证记录](doc/VERIFICATION.md)。发布前请在最终提交上重新确认开发扩展安装、模板展开和光标定位。
+用户已确认 Linux 和 macOS 的手动功能验证通过；macOS 的环境、被测提交、逐项结果和排查过程已补齐，见 [macOS 测试记录](doc/TESTING.md)。本次 Mac 被测代码为 `0c86330`，扩展 ID 为 `live-templates`；发布前仍需在最终提交上确认新 ID `live-templates-lsp` 的开发扩展安装、模板展开和光标定位，见 [验证记录](doc/VERIFICATION.md)。
 
 时间目前取自补全请求时刻。候选菜单停留跨分钟后才确认时，插入的时间可能仍是生成候选的时间；尚未实现确认时刷新。
 
