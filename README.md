@@ -70,7 +70,7 @@ If you installed the old development ID `live-templates`, uninstall it before in
 
 ## Development installation
 
-Rust is required only to build from source. The workspace and release workflow use Rust 1.90.0; development builds also passed with 1.96.0. Install the `wasm32-wasip2` target and run `zed: install dev extension` from Zed's command palette, selecting this repository. The development extension downloads the released server by default. To test native source changes, build locally and use the optional override:
+Rust is required only to build from source. Builds and the release workflow are verified with Rust 1.90.0; development builds also passed with 1.96.0. Install the `wasm32-wasip2` target and run `zed: install dev extension` from Zed's command palette, selecting this repository. The development extension downloads the released server by default. To test native source changes, build locally and use the optional override:
 
 ```sh
 cargo build -p server --release --locked

@@ -1,5 +1,34 @@
 # Verification record
 
+## Automatic server distribution: 2026-10-07
+
+The extension now downloads the precompiled server matching its version and platform, caches it in the extension work directory, and lets Zed start it. An explicit `lsp.templates.binary.path` remains an optional override. Normal registry users need neither Rust nor a server path; custom command interpreters remain user-provided.
+
+The final installer runtime is `83308a51748cc967e8258b51583ad33bdea4f69d`. The native servers are published in [release v0.1.0](https://github.com/s-infinite-box/zed-live-templates/releases/tag/v0.1.0), built from tag source `9020e61bf2389e6c2d1f0db3db1ddfc19b36cdfb`. The later installer change preserves the complete version/platform in the staging directory name and does not change native server code.
+
+| Check | Actual result |
+| --- | --- |
+| Native tests, release build and archive on Linux x86_64 / ARM64, macOS Intel / ARM64, Windows x86_64 / ARM64 | All six passed with Rust 1.90.0 on native GitHub runners |
+| Published release | Six platform archives plus `SHA256SUMS`; all release jobs passed before publication |
+| Installer tests | Six asset mappings, unsupported x86, interrupted download cleanup, missing executable rejection, retry and cache reuse passed |
+| Native integration tests | LSP initialization, command variable, Chinese/emoji UTF-16 range, cursor marker, configuration reload/removal/restoration, shutdown and version without configuration passed |
+| WASM extension | Rust 1.90.0 release build and installer tests passed |
+| Official Zed 1.22.0, Linux x86_64, fresh installed WASM and empty server cache | First start downloaded v0.1.0 and started the cached static-musl server; no `binary.path` and no source build |
+| Official Zed cache reuse, Linux | A second isolated profile containing the downloaded cache started the server with a deliberately unavailable network proxy; binary hash and modification time stayed unchanged |
+| Official Zed advanced override, Linux | Started the custom binary with the configured `--config` argument and environment variable despite an unavailable network proxy; no server download cache was created |
+| Downloaded Linux release server | Extended LSP checks passed: `dt`, `todo`, `ctx`, `@dt`, Bash/Python variables, UTF-16, cursor, escaping and configuration reload/removal/restoration |
+| Windows 11 x86_64 VM, no Rust installed | Published ZIP checksum, native startup with default `APPDATA` and no `HOME`, LSP initialization, command variable, UTF-16 range, reload and shutdown passed |
+
+Evidence: [final runtime CI](https://github.com/s-infinite-box/zed-live-templates/actions/runs/37604193627), [release CI](https://github.com/s-infinite-box/zed-live-templates/actions/runs/37603834223). The Linux installed WASM SHA-256 was `fa683cea1a6c9c9478def48a35a47c389186db0b935ec2a3a012606ff35360c7`. The Windows release ZIP SHA-256 was `bec95265cc43c1b90ed692da7630530da0cf4e9b4c4392f42dca2cf968d9fd4c`.
+
+The new official Linux checks verify installation and startup, and are separate from the maintainer's historical manual expansion tests. The maintainer then entered `dt` in the new official Linux instance; visual inspection confirmed two expansions to `AUTO 2026/10/7 inft`, matching the configured date/hostname template. The maintainer also confirmed the cursor was at the end, after the hostname and trailing space, as specified by `$END$`. This verifies the new installer flow and two `dt` expansions, without implying a new manual run of every historical case. The Mac SSH connection was refused during this run; the six-target CI verifies both Mac native servers, but Mac automatic-download UI testing is pending. Windows has native protocol evidence, not a Zed GUI test. Direct GitHub download from the Windows VM was reset; the same published ZIP and checksum were downloaded on Linux and transferred over SSH for native testing.
+
+On Windows, command timeouts terminate the immediate process; descendant-process cleanup is currently guaranteed only on Unix. The extension continues to register Markdown only. Built-in templates require no Bash or Python; only user-selected command variables require their chosen interpreter.
+
+The prepared registry entry must use the updated public source containing the installer and new documentation. Its exact gitlink is recorded in the registry branch and proposed PR body. The following records describe the earlier preparation and do not establish manual testing of the new installer.
+
+## Historical preparation record (2026-10-06)
+
 ## Manual checks reported by the maintainer
 
 On 2026-10-06, the maintainer explicitly confirmed successful manual functional checks in the official Zed distribution on Linux x86_64 and macOS ARM64. These official-Zed results are the primary compatibility evidence. Earlier ZedG logs and environment inspections are supplementary evidence.
@@ -59,7 +88,7 @@ The Mac run used a freshly built ARM64 release server and a Linux-built WASM art
 
 The extension ID changed from `live-templates` to `live-templates-lsp`; the language server ID `templates` and configuration paths are unchanged. Replace the old development installation before checking the new ID.
 
-The prepared registry entry uses version `0.1.0` and pins submodule commit `bd55a6654976e4aeaa1fd6a38af446588870e696`, the source used for both official-Zed manual runs. It is reachable from the public repository's `main` branch. Subsequent documentation updates record the completed checks without changing runtime source.
+The earlier prepared registry entry used version `0.1.0` and pinned submodule commit `bd55a6654976e4aeaa1fd6a38af446588870e696`, the source used for both official-Zed manual runs. It is reachable from the public repository's `main` branch. Subsequent documentation updates record the completed checks without changing runtime source.
 
 The manual checklist provided for these runs was:
 

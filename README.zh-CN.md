@@ -70,7 +70,7 @@
 
 ## 开发安装
 
-只有从源码构建才需要 Rust。工作区与发布流程使用 Rust 1.90.0，也已通过 1.96.0 开发构建。安装 `wasm32-wasip2` 目标后，在 Zed 命令面板执行 `zed: install dev extension`，选择本仓库目录。开发扩展默认也会下载已发布的服务；验证原生服务源码改动时，本机构建后使用可选覆盖配置：
+只有从源码构建才需要 Rust。构建及发布流程已通过 Rust 1.90.0 验证，也已通过 1.96.0 开发构建。安装 `wasm32-wasip2` 目标后，在 Zed 命令面板执行 `zed: install dev extension`，选择本仓库目录。开发扩展默认也会下载已发布的服务；验证原生服务源码改动时，本机构建后使用可选覆盖配置：
 
 ```sh
 cargo build -p server --release --locked

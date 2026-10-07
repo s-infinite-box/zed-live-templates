@@ -2,7 +2,13 @@
 
 English | [简体中文](TESTING.zh-CN.md)
 
-The primary compatibility result is the maintainer's confirmed manual testing in official Zed on Linux and macOS. The renamed extension has passed new manual checks in official Zed 1.22.0 on both platforms, using source `bd55a66`. The earlier ZedG inspection and logs below are supplementary test evidence; see the [verification summary](VERIFICATION.md).
+## Automatic installation and release checks: 2026-10-07
+
+Precompiled v0.1.0 servers are published for Linux, macOS and Windows on x86_64 and ARM64. All six native CI jobs passed tests, release builds and packaging with Rust 1.90.0. Official Linux Zed 1.22.0 downloaded and started the server without a binary path; cached startup and explicit path/arguments/environment overrides also passed with an unavailable proxy. The Windows 11 x86_64 VM passed published-server protocol checks without Rust or `HOME`, using its default `APPDATA` configuration path.
+
+See [VERIFICATION.md](VERIFICATION.md) for exact source commits, CI links, checksums and scope. The maintainer entered `dt` in the new official Linux instance; two expansions to `AUTO 2026/10/7 inft` were visually confirmed; the maintainer also confirmed the `$END$` cursor at the end. Mac automatic-download UI checks and Windows Zed GUI checks are pending. Mac SSH was unavailable. The Windows VM's direct GitHub download was reset, so its verified release archive was transferred over SSH for native testing.
+
+The records below are the historical 2026-10-06 manual tests of `bd55a66` and earlier source. They do not establish manual UI testing of the new installer.
 
 ## Official Zed manual verification
 

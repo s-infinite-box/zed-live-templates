@@ -2,6 +2,26 @@
 
 [English](TESTING.md) | 简体中文
 
+## 自动安装与发布验证：2026-10-07
+
+新版服务已发布为 [v0.1.0](https://github.com/s-infinite-box/zed-live-templates/releases/tag/v0.1.0)，包含 Linux、macOS、Windows 各自的 x86_64 和 ARM64，共六个服务包及 `SHA256SUMS`。六种原生运行器均通过 Rust 1.90.0 的服务测试、发布构建与打包；最终安装器运行时代码为 `83308a5`。[最终代码 CI](https://github.com/s-infinite-box/zed-live-templates/actions/runs/37604193627)；[发布 CI](https://github.com/s-infinite-box/zed-live-templates/actions/runs/37603834223)。
+
+| 验证项目 | 实际结果 |
+| --- | --- |
+| Linux 官方 Zed 1.22.0 首次安装 | 安装已构建的 WASM，在空服务缓存、没有 `binary.path` 的情况下，自动下载并启动静态 musl 服务，无需源码构建 |
+| Linux 官方 Zed 缓存 | 第二个独立配置复用下载后的缓存；网络代理故意指向不可用端口，服务仍成功启动，文件哈希和修改时间不变 |
+| Linux 官方 Zed 高级覆盖 | 不可用网络代理下，自定义程序路径、`--config` 参数和环境变量均生效，未创建服务下载缓存 |
+| Linux 发布服务协议 | `dt`、`todo`、`ctx`、`@dt`，Bash/Python，中文和 emoji 的 UTF-16 范围，光标、转义、配置重载/删除/恢复均通过 |
+| Windows 11 x86_64 虚拟机 | 无 Rust 环境中，发布 ZIP 校验、默认 `APPDATA` 配置且无 `HOME`、LSP、命令变量、UTF-16、配置重载和退出均通过 |
+| 安装器失败与重试 | 架构选择、下载中断清理、附件缺少程序、失败重试与完成后缓存复用均通过 Rust 测试 |
+
+以上自动下载与启动检查不等于用户手动确认了新版的所有 UI 展开行为。用户随后在新版 Linux 官方 Zed 中手动输入 `dt`，窗口确认两次展开为 `AUTO 2026/10/7 inft`，与配置中的日期和主机名模板一致；用户还确认光标位于末尾，符合 `$END$` 的位置；Mac 的 `ssh vv` 当前拒绝连接，因此新版 Mac 自动下载的 UI 复测仍待补。Windows 尚未做 Zed GUI 测试；虚拟机直连 GitHub 被重置，所以原生检查使用的是从 Linux 下载并经 SSH 传入、校验通过的同一发布包。
+
+插件仍只注册 Markdown。内置变量无需 Bash、Python；用户自定义命令才需要对应解释器。Windows 超时结束直接命令进程，命令后代进程清理目前仅在 Unix 平台保证。
+
+构建、发布来源与具体校验值见 [验证记录](VERIFICATION.md)。下面保留的是 2026-10-06 的历史手动测试记录，被测提交 `bd55a66`；不能把该确认套用到新版自动安装代码。
+
+
 ## 官方 Zed 手动验证
 
 2026-10-06，用户明确补充确认：Linux 和 macOS 的官方 Zed 版本也已完成手动功能测试，均通过。本文以官方 Zed 的测试结果作为主要兼容性依据；此前 ZedG 的环境观察和日志作为补充测试记录保留。
