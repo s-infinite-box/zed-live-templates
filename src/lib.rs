@@ -1,3 +1,5 @@
+mod installer;
+
 use zed_extension_api::{self as zed, settings::LspSettings};
 
 struct Extension;
@@ -13,20 +15,29 @@ impl zed::Extension for Extension {
         worktree: &zed::Worktree,
     ) -> zed::Result<zed::Command> {
         let settings = LspSettings::for_worktree(id.as_ref(), worktree)?;
-        let path = settings
-            .binary
-            .as_ref()
-            .and_then(|binary| binary.path.clone())
-            .ok_or_else(|| {
-                "Set lsp.templates.binary.path in Zed settings to the absolute path of the server executable"
-                    .to_owned()
-            })?;
-        let binary = settings.binary.unwrap();
+        let binary = settings.binary;
+        let path = match binary.as_ref().and_then(|binary| binary.path.clone()) {
+            Some(path) => path,
+            None => {
+                let result = installer::install(id);
+                if let Err(error) = &result {
+                    zed::set_language_server_installation_status(
+                        id,
+                        &zed::LanguageServerInstallationStatus::Failed(error.clone()),
+                    );
+                }
+                result?
+            }
+        };
         let mut env = worktree.shell_env();
-        env.extend(binary.env.unwrap_or_default());
+        let mut args = Vec::new();
+        if let Some(binary) = binary {
+            env.extend(binary.env.unwrap_or_default());
+            args = binary.arguments.unwrap_or_default();
+        }
         Ok(zed::Command {
             command: path,
-            args: binary.arguments.unwrap_or_default(),
+            args,
             env,
         })
     }

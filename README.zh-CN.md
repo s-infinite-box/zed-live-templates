@@ -2,28 +2,33 @@
 
 [English](README.md) | 简体中文
 
-用户在 Markdown 中输入自己配置的缩写，选择补全候选后确认，插入模板并定位到 `$END$`。模板、自定义变量及其命令都由用户配置，`dt` 和 `todo` 只是示例。
+在 Markdown 中输入自己配置的缩写，选择补全候选后确认，插入模板并定位到 `$END$`。支持日期、时间、机器名和可选的命令变量。模板和缩写由用户配置，`dt` 和 `todo` 只是示例。
 
-代码分为 Zed WASM 扩展 `extension`、模板库 `core` 和原生 LSP 服务 `server`。当前支持 Markdown；用户已确认在 Linux x86_64 和 macOS ARM64 的官方 Zed 中完成手动功能验证，均通过。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](doc/VERIFICATION.md)，官方 Zed 的结果、补充环境检查和具体范围见 [测试记录](doc/TESTING.zh-CN.md)。
+扩展 ID 为 `live-templates-lsp`，Zed 设置中的语言服务器名称为 `templates`。扩展目前**只注册 Markdown**。
 
-功能、工作流程和代码架构见 [设计文档](doc/DESIGN.zh-CN.md)。扩展 ID 为 `live-templates-lsp`；Zed 设置中的语言服务器名称仍为 `templates`。
+## 安装和配置
 
-## 构建和接入 Zed
+官方仓库收录后，在 Zed 扩展列表安装 **Live Templates**。收录前可以按下文的开发安装方式使用。
 
-在项目目录运行：
+首次使用时，扩展从本项目的 [GitHub Releases](https://github.com/s-infinite-box/zed-live-templates/releases) 自动下载对应系统、CPU 架构和扩展版本的预编译服务。Zed 自动启动它，并缓存在扩展工作目录。**普通用户无需安装 Rust，也无需填写服务程序路径。** 首次下载需要访问 GitHub 发布附件，后续启动复用缓存，可离线使用。升级扩展后使用匹配的新版本；下载失败后在下次启动语言服务器时重试。
 
-```sh
-cargo build -p server --release
-cargo build -p extension --release --target wasm32-wasip2
-```
+预编译服务覆盖六种组合：
 
-项目使用 Rust 1.96.0 和 `wasm32-wasip2` 目标。原生服务位于 `target/release/server`，扩展产物位于 `target/wasm32-wasip2/release/extension.wasm`。
+| 系统 | x86_64 | ARM64 |
+| --- | --- | --- |
+| Linux | 静态 musl | 静态 musl |
+| macOS | Intel | Apple Silicon |
+| Windows | MSVC | MSVC |
 
-在 macOS 上需重新构建原生 `server`，Linux 的二进制不能直接使用。用户命令所需的 Bash、Python 等解释器也需要在本机可用。本次 Mac 验证使用 Linux 构建的 `extension.wasm` 和 Mac 原生服务；Mac 本机重新编译 WASM 的流程尚未验证。
+根据下面的示例创建 `templates.toml`。默认位置为：
 
-已安装旧 ID `live-templates` 的开发扩展时，先卸载旧扩展，再用本项目目录重新安装 `live-templates-lsp`。现有 `lsp.templates` 设置和模板配置路径继续使用。
+| 平台 | 默认模板配置路径 |
+| --- | --- |
+| Linux / macOS | `~/.config/zed-live-templates/templates.toml` |
+| Windows | `%APPDATA%\zed-live-templates\templates.toml` |
+| 设置了 `XDG_CONFIG_HOME` 的任意系统 | `$XDG_CONFIG_HOME/zed-live-templates/templates.toml` |
 
-在 Zed 命令面板执行 `zed: install dev extension`，选择本项目根目录。Zed 会构建并加载扩展。随后把下面配置合并到 Zed 用户设置中，将两处路径换成实际绝对路径：
+如果现有 Zed 设置限制了 Markdown 的语言服务器，将 `"templates"` 加到该列表。使用其他模板文件时，可以合并以下设置，仅替换模板文件的绝对路径。Windows JSON 路径使用双反斜杠或正斜杠：
 
 ```json
 {
@@ -34,22 +39,46 @@ cargo build -p extension --release --target wasm32-wasip2
   },
   "lsp": {
     "templates": {
-      "binary": {
-        "path": "/path/to/zed-live-templates/target/release/server"
-      },
       "initialization_options": {
-        "config_path": "/path/to/zed-live-templates/examples/templates.toml"
+        "config_path": "/absolute/path/templates.toml"
       }
     }
   }
 }
 ```
 
-`"..."` 保留其他语言服务器。重启 Markdown 的语言服务器后，输入示例中的 `dt` 或 `todo`；如果自动补全未弹出，执行 `editor: show completions`。选中模板候选后按当前键位确认；默认通常是 Enter。
+`"..."` 保留其他语言服务器。打开 Markdown 文件，输入已配置的缩写并确认模板候选。没有自动弹出菜单时执行 `editor: show completions`。项目设置需要先信任工作区；没有模板配置时不提供候选。
 
-如果把上述配置放在项目的 `.zed/settings.json` 中，首次打开需信任该项目，模板服务才会启动。macOS 使用独立数据目录验证时，直接启动应用主程序并传入 `--user-data-dir`；具体命令与两处接入问题见 [测试记录](doc/TESTING.md#启动问题与处理)。
+### 可选的服务覆盖配置
 
-默认模板配置路径为 `$XDG_CONFIG_HOME/zed-live-templates/templates.toml`，未设置 `XDG_CONFIG_HOME` 时使用 `~/.config/zed-live-templates/templates.toml`。也可以通过 `server --config /absolute/path/templates.toml` 指定，命令行优先于初始化选项。没有模板配置时不提供候选。
+高级用户可以设置 `lsp.templates.binary.path` 为本机服务程序的绝对路径，此时完全跳过下载。`binary.arguments` 和 `binary.env` 在自动安装和覆盖路径两种情况下均生效。通过参数指定的 `--config` 优先于 `initialization_options.config_path`：
+
+```json
+{
+  "lsp": {
+    "templates": {
+      "binary": {
+        "path": "/absolute/path/custom/server",
+        "arguments": ["--config", "/absolute/path/templates.toml"]
+      }
+    }
+  }
+}
+```
+
+安装过旧 ID `live-templates` 的开发扩展时，先卸载旧扩展再安装 `live-templates-lsp`。模板文件和 `lsp.templates` 设置可继续使用；删除 `binary.path` 即切换为自动安装。
+
+## 开发安装
+
+只有从源码构建才需要 Rust。构建及发布流程已通过 Rust 1.90.0 验证，也已通过 1.96.0 开发构建。安装 `wasm32-wasip2` 目标后，在 Zed 命令面板执行 `zed: install dev extension`，选择本仓库目录。开发扩展默认也会下载已发布的服务；验证原生服务源码改动时，本机构建后使用可选覆盖配置：
+
+```sh
+cargo build -p server --release --locked
+cargo build -p extension --release --target wasm32-wasip2 --locked
+cargo test --workspace --locked
+```
+
+原生输出为 `target/release/server`，Windows 下为 `server.exe`；WASM 输出为 `target/wasm32-wasip2/release/extension.wasm`。官方插件包只含清单和 WASM，原生服务由 [.github/workflows/server.yml](.github/workflows/server.yml) 构建并发布到 GitHub Releases。
 
 ## 配置模板
 
@@ -61,15 +90,12 @@ date = "%Y/%-m/%-d"
 time = "%H:%M"
 timezone = "local"
 
-[variables.week]
-command = ["bash", "variables/week_zh.sh"]
-
 [[templates]]
 id = "daily_note"
 trigger = "dt"
 description = "插入日期记录"
 languages = ["Markdown"]
-body = '''# 周$week$ $date$ $time$ $host$
+body = '''# $date$ $time$ $host$
 $END$
 ---'''
 
@@ -80,7 +106,7 @@ languages = ["Markdown"]
 body = '- [ ] $END$'
 ```
 
-内置变量只有 `$date$`、`$time$`、`$host$`。`$END$` 表示最终光标位置，省略时光标在末尾。`$week$` 是用户脚本变量，插件提供原始星期编号供脚本转换。`timezone` 支持 `local` 和 `UTC`。
+内置变量只有 `$date$`、`$time$`、`$host$`。`$END$` 表示最终光标位置，省略时光标在末尾。星期等额外格式可用用户脚本实现，插件提供原始星期编号供脚本转换。`timezone` 支持 `local` 和 `UTC`。
 
 使用 `\$` 输出字面量 `$`；普通 `$PATH` 等不完整变量标记保留原样。变量输出不会再次解析为模板，内部的 `$`、反斜杠和 `}` 会正确转义。
 
@@ -128,3 +154,5 @@ command = ["python3", "variables/symbol_name.py"]
 ## 开源协议
 
 本项目采用 [MIT 协议](LICENSE)。
+
+内置变量不需要额外解释器；自定义命令所用的 Bash、Python 或其他程序需在本机可用。Windows 超时会结束直接启动的命令进程，命令后代进程的清理目前仅在 Unix 平台保证。

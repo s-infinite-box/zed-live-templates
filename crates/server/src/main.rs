@@ -87,7 +87,7 @@ impl LanguageServer for Backend {
         Ok(InitializeResult {
             server_info: Some(ServerInfo {
                 name: "Live Templates".into(),
-                version: Some("0.1.0".into()),
+                version: Some(env!("CARGO_PKG_VERSION").into()),
             }),
             capabilities: ServerCapabilities {
                 position_encoding: Some(PositionEncodingKind::UTF16),
@@ -252,11 +252,22 @@ fn absolute(path: &Path) -> PathBuf {
     }
 }
 
-fn default_config() -> PathBuf {
-    let directory = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap()).join(".config"));
-    directory.join("zed-live-templates/templates.toml")
+fn default_config() -> Result<PathBuf> {
+    let directory = config_directory(
+        cfg!(windows),
+        |key| std::env::var_os(key).filter(|value| !value.is_empty()).map(PathBuf::from),
+    ).ok_or_else(|| anyhow::anyhow!("Cannot locate the user configuration directory; pass --config with an absolute template path"))?;
+    Ok(directory.join("zed-live-templates/templates.toml"))
+}
+
+fn config_directory(windows: bool, env: impl Fn(&str) -> Option<PathBuf>) -> Option<PathBuf> {
+    env("XDG_CONFIG_HOME").or_else(|| {
+        if windows {
+            env("APPDATA").or_else(|| env("USERPROFILE").map(|home| home.join("AppData/Roaming")))
+        } else {
+            env("HOME").map(|home| home.join(".config"))
+        }
+    })
 }
 
 #[tokio::main]
@@ -273,8 +284,12 @@ async fn main() -> Result<()> {
             }
             "--help" => {
                 println!(
-                    "server [--config templates.toml]\nRuns the Live Templates language server over stdin/stdout."
+                    "server [--config templates.toml] [--version]\nRuns the Live Templates language server over stdin/stdout."
                 );
+                return Ok(());
+            }
+            "--version" => {
+                println!("live-templates-server {}", env!("CARGO_PKG_VERSION"));
                 return Ok(());
             }
             _ => anyhow::bail!("unknown argument: {arg}"),
@@ -282,7 +297,10 @@ async fn main() -> Result<()> {
     }
     let cli_config = config.is_some();
     let state = State {
-        config_path: config.unwrap_or_else(default_config),
+        config_path: match config {
+            Some(path) => path,
+            None => default_config()?,
+        },
         source: None,
         config: None,
         documents: HashMap::new(),
@@ -298,4 +316,39 @@ async fn main() -> Result<()> {
         .serve(service)
         .await;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn configuration_paths_without_windows_home() {
+        let env = |key: &str| match key {
+            "HOME" => Some(PathBuf::from("home")),
+            "APPDATA" => Some(PathBuf::from("roaming")),
+            _ => None,
+        };
+        assert_eq!(
+            config_directory(false, env),
+            Some(PathBuf::from("home/.config"))
+        );
+        assert_eq!(config_directory(true, env), Some(PathBuf::from("roaming")));
+        assert_eq!(
+            config_directory(true, |key| (key == "APPDATA")
+                .then(|| PathBuf::from("roaming"))),
+            Some(PathBuf::from("roaming"))
+        );
+        assert_eq!(
+            config_directory(true, |key| (key == "USERPROFILE")
+                .then(|| PathBuf::from("profile"))),
+            Some(PathBuf::from("profile/AppData/Roaming"))
+        );
+        assert_eq!(config_directory(true, |_| None), None);
+        assert_eq!(
+            config_directory(false, |key| (key == "XDG_CONFIG_HOME")
+                .then(|| PathBuf::from("custom"))),
+            Some(PathBuf::from("custom"))
+        );
+    }
 }
