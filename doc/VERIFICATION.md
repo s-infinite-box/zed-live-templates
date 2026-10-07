@@ -13,6 +13,7 @@ The final installer runtime is `83308a51748cc967e8258b51583ad33bdea4f69d`. The n
 | Installer tests | Six asset mappings, unsupported x86, interrupted download cleanup, missing executable rejection, retry and cache reuse passed |
 | Native integration tests | LSP initialization, command variable, Chinese/emoji UTF-16 range, cursor marker, configuration reload/removal/restoration, shutdown and version without configuration passed |
 | WASM extension | Rust 1.90.0 release build and installer tests passed |
+| Official registry CLI package | Revision `9ee3c503a4bbbc6b4a0f8a789acca4871d773223`, Rust 1.90.0: archive contains only `extension.toml` and `extension.wasm`; official Linux Zed downloaded and started the server from this packaged WASM in an empty cache |
 | Official Zed 1.22.0, Linux x86_64, fresh installed WASM and empty server cache | First start downloaded v0.1.0 and started the cached static-musl server; no `binary.path` and no source build |
 | Official Zed cache reuse, Linux | A second isolated profile containing the downloaded cache started the server with a deliberately unavailable network proxy; binary hash and modification time stayed unchanged |
 | Official Zed advanced override, Linux | Started the custom binary with the configured `--config` argument and environment variable despite an unavailable network proxy; no server download cache was created |
