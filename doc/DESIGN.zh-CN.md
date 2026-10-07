@@ -4,7 +4,7 @@
 
 ## 解决的问题与功能
 
-在 Zed 中用缩写快速插入日记、日期记录、待办等文本，自动生成日期、时间和机器名，减少重复输入。当前支持 Markdown；用户已确认 Linux x86_64 和 macOS ARM64 的官方 Zed 手动功能验证均通过。Windows 尚未验证，当前不声明支持。验证来源和待补项见 [验证记录](VERIFICATION.md)，具体范围见 [测试记录](TESTING.zh-CN.md)。
+在 Zed 中用缩写快速插入日记、日期记录、待办等文本，自动生成日期、时间和机器名，减少重复输入。当前支持 Markdown；用户已确认 Linux x86_64 和 macOS ARM64 的官方 Zed 手动功能验证均通过。预编译服务覆盖 Linux、macOS、Windows 的 x86_64 和 ARM64；自动安装与分发验证单独记录，不作为此前手动测试的结果。验证来源和待补项见 [验证记录](VERIFICATION.md)，具体范围见 [测试记录](TESTING.zh-CN.md)。
 
 用户通过 TOML 定义缩写和模板。例如配置 `dt` 对应：
 
@@ -42,7 +42,7 @@ $END$
 
 | 代码位置 / 包 | 职责 | 产物 |
 |---|---|---|
-| `src/lib.rs` / `extension` | 接入 Zed，读取设置，启动模板服务 | `extension.wasm` |
+| `src/` / `extension` | 接入 Zed，读取设置，自动下载并缓存对应版本的模板服务，启动服务 | `extension.wasm` |
 | `crates/server/src/` / `server` | 处理 LSP 请求、文档同步、配置重载、缩写匹配和补全返回 | 原生程序 `server` |
 | `crates/core/src/` / `core` | 解析配置和模板、生成上下文、执行变量命令、渲染 snippet | 链接到 `server` 的库 |
 
@@ -51,9 +51,20 @@ Zed 与原生服务通过标准输入输出传递 LSP 消息；服务单独启�
 主要文件职责：
 
 - `server/main.rs`：服务入口，串起配置、匹配、变量计算和补全返回。
+- `src/installer.rs`：选择发布附件，下载解压，启用版本缓存。
 - `server/documents.rs`：文档状态、UTF-16 光标位置转换和缩写边界判断。
 - `core/config.rs`、`core/parser.rs`：读取配置，将模板拆成文字、变量和光标节点。
 - `core/context.rs`：生成时间、机器名、项目和文档上下文。
 - `core/command.rs`、`core/renderer.rs`：运行变量命令，将结果组合成 snippet。
 
 上述 `server/`、`core/` 文件均位于对应包的 `src/` 下。`examples/` 提供配置和变量脚本示例；历史验证结果与手动复测清单见 [验证记录](VERIFICATION.md)。
+
+## 服务分发
+
+扩展以自身版本选择 GitHub Release `v<version>`，按当前操作系统和架构选择附件。Unix 使用 tar.gz，Windows 使用 zip；Linux 使用静态 musl。下载通过 Zed 扩展 API 完成，只写扩展工作目录。
+
+下载与解压先进入临时目录，确认非空服务文件并设置执行权限后，原子重命名为版本及架构对应的缓存目录。后续启动直接复用缓存；失败清理临时目录并允许重试。升级选择新的版本目录，不扫描或删除其他扩展的数据。
+
+`lsp.templates.binary.path` 有值时跳过自动安装；参数与环境覆盖在两种模式下均保留。Windows 默认模板目录使用 `APPDATA`，不依赖 `HOME`。
+
+发布工作流在六种原生运行器上测试并构建服务，全部成功后才发布附件及 `SHA256SUMS`；扩展 WASM 另行使用官方仓库的 Rust 1.90.0 构建。发布后再更新官方插件仓库中的子模块提交。

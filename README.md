@@ -2,24 +2,33 @@
 
 English | [简体中文](README.zh-CN.md)
 
-Expand user-defined abbreviations into Markdown templates with dynamic variables. Select a completion to replace the abbreviation and move the cursor to `$END$`. Triggers, template bodies, and command variables belong to the user's configuration; `dt` and `todo` are examples.
+Expand user-defined abbreviations into Markdown templates with date, time, hostname, and optional command variables. Confirm a completion to replace the abbreviation and move the cursor to `$END$`. Triggers and template bodies belong to your configuration; `dt` and `todo` are examples.
 
-The extension ID is `live-templates-lsp`. The language server name used in Zed settings is `templates`.
+The extension ID is `live-templates-lsp`; the language server ID in Zed settings is `templates`. The extension currently registers **Markdown only**.
 
-The maintainer has confirmed manual functional checks in official Zed on Linux x86_64 and macOS ARM64. Windows has not been verified and is not claimed as supported. See the [platform test records](doc/TESTING.md) and [verification summary](doc/VERIFICATION.md) for the official-Zed results, supplementary environment checks, and final submission checks.
+## Install and configure
 
-## Build and configure
+Install **Live Templates** from Zed's extensions view once the registry submission is accepted. Until then, see [development installation](#development-installation).
 
-The project uses Rust 1.96.0 and the `wasm32-wasip2` target. From the repository root:
+The extension automatically downloads the matching precompiled server from this repository's [GitHub releases](https://github.com/s-infinite-box/zed-live-templates/releases). Zed starts it and caches it in the extension's work directory. **Normal users do not need Rust or a server executable path.** The first start needs access to GitHub release assets; subsequent starts reuse the cached version, including offline. An extension upgrade selects its matching server version; a failed download is retried on the next language-server start.
 
-```sh
-cargo build -p server --release
-cargo build -p extension --release --target wasm32-wasip2
-```
+Precompiled servers are published for all six combinations:
 
-The native server is `target/release/server`; the WASM artifact is `target/wasm32-wasip2/release/extension.wasm`. Build the native server on the machine and architecture where it will run. Bash, Python, or other interpreters used by your command variables must also be available there. The macOS UI checks used a Linux-built WASM artifact and a Mac-built native server. Subsequent Mac-local WASM development builds also passed; see the test records for their scope.
+| OS | x86_64 | ARM64 |
+| --- | --- | --- |
+| Linux | static musl | static musl |
+| macOS | Intel | Apple Silicon |
+| Windows | MSVC | MSVC |
 
-For a development installation, run `zed: install dev extension` in Zed's command palette and select this repository. After registry publication, you can install `live-templates-lsp` from Zed's extensions view. In either case, build the native server separately and merge the following into your Zed settings, replacing both paths with absolute paths:
+Create `templates.toml` using the example below. The default locations are:
+
+| Platform | Default template configuration |
+| --- | --- |
+| Linux / macOS | `~/.config/zed-live-templates/templates.toml` |
+| Windows | `%APPDATA%\zed-live-templates\templates.toml` |
+| Any platform with `XDG_CONFIG_HOME` set | `$XDG_CONFIG_HOME/zed-live-templates/templates.toml` |
+
+If your Zed settings already restrict Markdown language servers, add `"templates"` to that list. To use a different template file, merge the following into your Zed settings, replacing the template path with an absolute path (Windows JSON paths need escaped backslashes or forward slashes):
 
 ```json
 {
@@ -30,22 +39,46 @@ For a development installation, run `zed: install dev extension` in Zed's comman
   },
   "lsp": {
     "templates": {
-      "binary": {
-        "path": "/path/to/zed-live-templates/target/release/server"
-      },
       "initialization_options": {
-        "config_path": "/path/to/zed-live-templates/examples/templates.toml"
+        "config_path": "/absolute/path/templates.toml"
       }
     }
   }
 }
 ```
 
-`"..."` keeps the other language servers enabled. Restart the Markdown language servers, type a configured trigger such as `dt`, select the template completion, and confirm it using your keymap. If the menu does not appear automatically, run `editor: show completions`.
+`"..."` keeps other language servers enabled. Open a Markdown file, type a configured trigger, select the template completion, and confirm it using your keymap. If the menu does not appear automatically, run `editor: show completions`. Project settings require a trusted worktree. Without a template configuration, the server provides no completions.
 
-If you installed the previous development extension with ID `live-templates`, uninstall it before installing `live-templates-lsp`. Keep your existing `lsp.templates` settings and template configuration paths.
+### Optional server override
 
-By default the server reads `$XDG_CONFIG_HOME/zed-live-templates/templates.toml`, or `~/.config/zed-live-templates/templates.toml` when `XDG_CONFIG_HOME` is unset. You can also pass `server --config /absolute/path/templates.toml`; the command-line path takes precedence over `initialization_options.config_path`. Without a configuration file, the server provides no completions.
+Advanced users can set `lsp.templates.binary.path` to an absolute native server path. This bypasses downloading entirely. `binary.arguments` and `binary.env` remain available with both the automatic server and a custom path. A `--config` argument takes precedence over `initialization_options.config_path`.
+
+```json
+{
+  "lsp": {
+    "templates": {
+      "binary": {
+        "path": "/absolute/path/custom/server",
+        "arguments": ["--config", "/absolute/path/templates.toml"]
+      }
+    }
+  }
+}
+```
+
+If you installed the old development ID `live-templates`, uninstall it before installing `live-templates-lsp`. Keep your template configuration and `lsp.templates` settings; remove `binary.path` to switch to automatic installation.
+
+## Development installation
+
+Rust is required only to build from source. The workspace and release workflow use Rust 1.90.0; development builds also passed with 1.96.0. Install the `wasm32-wasip2` target and run `zed: install dev extension` from Zed's command palette, selecting this repository. The development extension downloads the released server by default. To test native source changes, build locally and use the optional override:
+
+```sh
+cargo build -p server --release --locked
+cargo build -p extension --release --target wasm32-wasip2 --locked
+cargo test --workspace --locked
+```
+
+The native output is `target/release/server` (`server.exe` on Windows); the WASM output is `target/wasm32-wasip2/release/extension.wasm`. The registry package contains the manifest and WASM extension only. Native servers are distributed through GitHub releases by [.github/workflows/server.yml](.github/workflows/server.yml).
 
 ## Define templates
 
@@ -117,7 +150,7 @@ Commands run when generating a completion and can run again when completions ref
 
 The maintainer has confirmed manual functional checks in official Zed on Linux and macOS. The pre-publication LSP checks also passed; their harness was subsequently removed from this repository. Results and the manual checklist for the renamed extension are recorded in [doc/VERIFICATION.md](doc/VERIFICATION.md).
 
-Dates and times are captured when the completion is generated. Confirming a candidate later can insert an earlier timestamp. Automatic menu display can depend on Zed's completion behavior and other language servers. Windows configuration lookup and command process cleanup have not been verified.
+Dates and times are captured when the completion is generated. Confirming a candidate later can insert an earlier timestamp. Automatic menu display can depend on Zed's completion behavior and other language servers. Custom command interpreters must be available locally; built-in variables require none. On Windows, timeouts terminate the immediate command process; descendant-process cleanup is currently guaranteed only on Unix.
 
 ## Design and scope
 
