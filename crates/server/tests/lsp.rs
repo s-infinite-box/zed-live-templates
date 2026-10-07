@@ -121,7 +121,7 @@ fn packaged_server_protocol_commands_and_reload() {
     let mut session = Session::start();
     let config = session.directory.join("templates.toml");
     let command = if cfg!(windows) {
-        r#"["cmd.exe", "/D", "/C", "<nul set /p =command"]"#
+        r#"["cmd.exe", "/D", "/C", "echo command"]"#
     } else {
         r#"["sh", "-c", "printf command"]"#
     };
@@ -161,7 +161,11 @@ body = '$date$ $value$$END$'
         item["textEdit"]["newText"]
             .as_str()
             .unwrap()
-            .ends_with("command$0")
+            .ends_with(if cfg!(windows) {
+                "command\r\n$0"
+            } else {
+                "command$0"
+            })
     );
     fs::write(
         &config,
