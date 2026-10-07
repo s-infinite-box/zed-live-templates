@@ -70,7 +70,9 @@ fn cached_install(
     if fs::metadata(&binary).is_ok_and(|file| file.is_file() && file.len() > 0) {
         return Ok(binary.to_string_lossy().into_owned());
     }
-    let staging = directory.with_extension("downloading");
+    let mut staging = directory.as_os_str().to_owned();
+    staging.push(".downloading");
+    let staging = std::path::PathBuf::from(staging);
     let perform = || -> zed::Result<()> {
         if staging.exists() {
             fs::remove_dir_all(&staging).map_err(|error| error.to_string())?;
@@ -115,17 +117,19 @@ mod tests {
         let root = std::env::temp_dir().join(format!("templates-installer-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&root).unwrap();
-        let directory = root.join("version-target");
+        let directory = root.join("server-v0.1.0-x86_64-unknown-linux-musl");
+        let staging = root.join("server-v0.1.0-x86_64-unknown-linux-musl.downloading");
         assert!(
-            cached_install(&directory, "server", |staging| {
-                fs::create_dir(staging).unwrap();
-                fs::write(staging.join("server"), "partial").unwrap();
+            cached_install(&directory, "server", |path| {
+                assert_eq!(path, staging);
+                fs::create_dir(path).unwrap();
+                fs::write(path.join("server"), "partial").unwrap();
                 Err("interrupted".into())
             })
             .is_err()
         );
         assert!(!directory.exists());
-        assert!(!directory.with_extension("downloading").exists());
+        assert!(!staging.exists());
         assert!(
             cached_install(&directory, "server", |staging| {
                 fs::create_dir(staging).unwrap();
