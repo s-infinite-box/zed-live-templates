@@ -1,0 +1,114 @@
+name: Build and release server
+
+on:
+  push:
+    branches: [main, codex/auto-server-install]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+          - runner: macos-15
+            target: aarch64-apple-darwin
+          - runner: windows-2025
+            target: x86_64-pc-windows-msvc
+          - runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.90.0 --profile minimal --component rustfmt
+          rustup target add --toolchain 1.90.0 "${{ matrix.target }}"
+      - name: Install static Linux toolchain
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+          echo 'RUSTFLAGS=-C linker=musl-gcc' >> "$GITHUB_ENV"
+      - name: Test and build native server
+        run: |
+          cargo +1.90.0 fmt --all --check
+          cargo +1.90.0 test -p server --locked --target "${{ matrix.target }}"
+          cargo +1.90.0 build -p server --release --locked --target "${{ matrix.target }}"
+      - name: Package versioned asset
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          exe=server
+          if [[ "$RUNNER_OS" == Windows ]]; then exe=server.exe; fi
+          output=$("target/$TARGET/release/$exe" --version)
+          version=${output##* }
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then test "$GITHUB_REF_NAME" = "v$version"; fi
+          mkdir -p dist
+          name="live-templates-server-v$version-$TARGET"
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            export PACKAGE_SOURCE="$(pwd)/target/$TARGET/release/$exe"
+            export PACKAGE_DEST="$(pwd)/dist/$name.zip"
+            pwsh -NoProfile -Command 'Compress-Archive -LiteralPath $env:PACKAGE_SOURCE -DestinationPath $env:PACKAGE_DEST'
+          else
+            tar -czf "dist/$name.tar.gz" -C "target/$TARGET/release" "$exe"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: server-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  extension:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: |
+          rustup toolchain install 1.90.0 --profile minimal
+          rustup target add --toolchain 1.90.0 wasm32-wasip2
+          cargo +1.90.0 test -p extension --locked
+          cargo +1.90.0 build -p extension --release --locked --target wasm32-wasip2
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, extension]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: server-*
+          merge-multiple: true
+          path: dist
+      - name: Publish complete release
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$(find . -maxdepth 1 -name 'live-templates-server-*' | wc -l)" -eq 6
+          sha256sum live-templates-server-* > SHA256SUMS
+          gh release create "$RELEASE_TAG" --verify-tag --title "Live Templates $RELEASE_TAG" \
+            --notes "Precompiled Live Templates servers for Linux, macOS, and Windows on x86_64 and ARM64. Zed downloads the matching server automatically; Rust is only needed for development builds." \
+            live-templates-server-* SHA256SUMS
